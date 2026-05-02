@@ -1,0 +1,22 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: ai-company:latest
+    env_file:
+      - .env
+    environment:
+      - ACF_DATA_DIR=${ACF_DATA_DIR:-/data}
+    command: >
+      python -m modules.integration serve
+      --host ${ACF_HOST:-0.0.0.0}
+      --port ${ACF_PORT:-8000}
+    volumes:
+      - acf_data:/data
+    ports:
+      - "${ACF_PORT:-8000}:8000"
+    restart: unless-stopped
+
+volumes:
+  acf_data:

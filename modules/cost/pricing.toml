@@ -1,0 +1,14 @@
+# Default LLM pricing catalogue. Strings preserve Decimal precision because
+# tomllib parses bare numerics as float.
+
+[llm."claude-opus-4-7"]
+input_per_1k  = "0.015"
+output_per_1k = "0.075"
+
+[llm."claude-sonnet-4-6"]
+input_per_1k  = "0.003"
+output_per_1k = "0.015"
+
+[llm."claude-haiku-4-5"]
+input_per_1k  = "0.0008"
+output_per_1k = "0.004"

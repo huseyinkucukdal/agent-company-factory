@@ -1,0 +1,81 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PIP_EXTRAS: ${PIP_EXTRAS:-dev,llm-openai,llm-anthropic}
+    image: acf-app:dev
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - acf_data:/app/data
+    environment:
+      PYTHONPATH: /app
+      ACF_DATA_DIR: /app/data
+      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-}
+      LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-}
+      LLM_TEMPERATURE: ${LLM_TEMPERATURE:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      LLM_GITHUB_MODELS_BASE_URL: ${LLM_GITHUB_MODELS_BASE_URL:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LLM_ANTHROPIC_BASE_URL: ${LLM_ANTHROPIC_BASE_URL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LLM_OPENAI_BASE_URL: ${LLM_OPENAI_BASE_URL:-}
+    command: python -m pytest
+
+  api:
+    image: acf-app:dev
+    working_dir: /app
+    depends_on:
+      - app
+    volumes:
+      - ./:/app
+      - acf_data:/app/data
+    environment:
+      PYTHONPATH: /app
+      ACF_DATA_DIR: /app/data
+      ACF_API_HOST: 0.0.0.0
+      ACF_API_PORT: "8000"
+      ACF_JWT_SECRET: ${ACF_JWT_SECRET:-dev-secret-change-me}
+      LLM_PROVIDER: ${LLM_PROVIDER:-mock}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_TIMEOUT_SECONDS: ${LLM_TIMEOUT_SECONDS:-}
+      LLM_MAX_TOKENS: ${LLM_MAX_TOKENS:-}
+      LLM_TEMPERATURE: ${LLM_TEMPERATURE:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      LLM_GITHUB_MODELS_BASE_URL: ${LLM_GITHUB_MODELS_BASE_URL:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      LLM_ANTHROPIC_BASE_URL: ${LLM_ANTHROPIC_BASE_URL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      LLM_OPENAI_BASE_URL: ${LLM_OPENAI_BASE_URL:-}
+    ports:
+      - "8000:8000"
+    command: python -m modules.board_api.server
+
+  ui:
+    build:
+      context: ./modules/board_ui
+      dockerfile: Dockerfile
+      target: dev
+    working_dir: /app
+    depends_on:
+      - api
+    volumes:
+      - ./modules/board_ui:/app
+      - ui_node_modules:/app/node_modules
+    environment:
+      ACF_API_BASE: http://api:8000
+      NEXT_TELEMETRY_DISABLED: "1"
+      # Browser-side: SSE bypasses the Next.js dev rewrite (it buffers
+      # chunked responses) and connects directly to the Board API origin.
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+    ports:
+      - "3000:3000"
+    command: npm run dev
+
+volumes:
+  acf_data:
+  ui_node_modules:
